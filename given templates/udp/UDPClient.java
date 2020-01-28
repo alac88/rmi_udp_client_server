@@ -14,13 +14,13 @@ import common.MessageInfo;
 
 public class UDPClient {
 
-	private DatagramSocket sendSoc;
+	private DatagramSocket sendSoc = null;
 
 	public static void main(String[] args) {
 		InetAddress	serverAddr = null;
 		int			recvPort;
 		int 		countTo;
-		String 		message;
+		// String 		message;
 
 		// Get the parameters
 		if (args.length < 3) {
@@ -39,23 +39,42 @@ public class UDPClient {
 
 
 		// TO-DO: Construct UDP client class and try to send messages
+		UDPClient client = new UDPClient();
+		client.testLoop(serverAddr, recvPort, countTo);
 	}
 
-	public UDPClient() {
+	public UDPClient(){
 		// TO-DO: Initialise the UDP socket for sending data
+		try {
+			this.sendSoc = new DatagramSocket();
+		} catch(SocketException e){
+			System.out.println("Error creating the socket: " + e);
+		}
 	}
 
 	private void testLoop(InetAddress serverAddr, int recvPort, int countTo) {
 		int				tries = 0;
 
 		// TO-DO: Send the messages to the server
+		for (int i = 0 ; i < countTo ; i++){
+			MessageInfo msg = new MessageInfo(countTo, i);
+			send(msg.toString(), serverAddr, recvPort);
+		}
 	}
 
 	private void send(String payload, InetAddress destAddr, int destPort) {
 		int				payloadSize;
-		byte[]				pktData;
+		byte[]				pktData = new byte[256];
 		DatagramPacket		pkt;
 
 		// TO-DO: build the datagram packet and send it to the server
+		pktData = payload.getBytes();
+		payloadSize = pktData.length;
+		pkt = new DatagramPacket(pktData, payloadSize, destAddr, destPort);
+		try {
+			this.sendSoc.send(pkt);
+		} catch (IOException e){
+			System.out.println("Error when sending message: " + e);
+		}
 	}
 }
