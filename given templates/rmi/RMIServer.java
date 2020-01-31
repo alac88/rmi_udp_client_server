@@ -33,14 +33,10 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
 			// TO-DO: Bind to RMI registry
 			if (args.length < 1) {
-				System.out.println("Needs 2 arguments: ServerHostName/IPAddress");
+				System.out.println("Needs 1 argument1: ServerHostName/IPAddress");
 				System.exit(-1);
 			}
 			String urlServer = new String("rmi://" + args[0] + "/RMIServer");
-//			Registry registry = LocateRegistry.getRegistry(); // ********* get or create? ********
-			// The no-argument overload of LocateRegistry.getRegistry synthesizes a reference to a
-			// registry on the local host and on the default registry port, 1099. You must use an
-			// overload that has an int parameter if the registry is created on a port other than 1099.
 			rebindServer(urlServer, rmis);
 
 			System.out.println("Server ready");
@@ -53,22 +49,31 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 	}
 
 	protected static void rebindServer(String serverURL, RMIServer server) {
-		try {
-			// TO-DO:
-			// Start / find the registry (hint use LocateRegistry.createRegistry(...)
-			// If we *know* the registry is running we could skip this (eg run rmiregistry in the start script)
-			try {
-				LocateRegistry.getRegistry();
-			} catch (Exception e) {
-				LocateRegistry.createRegistry(1099);
-			}
 
-			// TO-DO:
-			// Now rebind the server to the registry (rebind replaces any existing servers bound to the serverURL)
-			// Note - Registry.rebind (as returned by createRegistry / getRegistry) does something similar but
-			// expects different things from the URL field.
+		// TO-DO:
+		// Start / find the registry (hint use LocateRegistry.createRegistry(...)
+		// If we *know* the registry is running we could skip this
+		// (eg run rmiregistry in the start script)
+		int IPLeft = serverURL.indexOf("//") + 2;
+		int IPRight = serverURL.indexOf("/RMIServer");
+		String IP = serverURL.substring(IPLeft, IPRight);
+		String[] IPParse = IP.split(":");
+		int serverPort = 1099;
+		if (IPParse.length == 2) {
+			serverPort = Integer.parseInt(IPParse[1]);
+		}
+		try {
+			LocateRegistry.createRegistry(serverPort);
+		} catch (Exception e) {
+			System.out.println("Registry for " + serverPort + " has already existed");
+		}
+
+		// TO-DO:
+		// Now rebind the server to the registry (rebind replaces any existing servers bound to the serverURL)
+		// Note - Registry.rebind (as returned by createRegistry / getRegistry) does something similar but
+		// expects different things from the URL field.
+		try {
 			Naming.rebind(serverURL, server);
-//			registry.rebind(serverURL, server);
 		} catch (Exception e) {
 			System.out.println("Rebind server fail: ");
 			e.printStackTrace();
@@ -110,6 +115,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 		//        any missing messages
 		if (msg.totalMessages == msg.messageNum) {
 			printMissingMessage(receivedMessages, msg.totalMessages, totalMessages);
+			totalMessages = -1;
 		}
 	}
 }

@@ -10,5 +10,5 @@ import java.rmi.RemoteException;
 
 public interface RMIServerI extends Remote {
 
-	public void receiveMessage(MessageInfo msg) throws RemoteException, IOException;
+  public void receiveMessage(MessageInfo msg) throws RemoteException, IOException;
 }
