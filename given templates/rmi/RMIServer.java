@@ -9,11 +9,16 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
 	private int totalMessages = -1;
+	private final int TIMEOUT = 5;
 	private int[] receivedMessages;
+	private int totalMessagesExpected = 0;
+	private Timer timer;
 
 	public RMIServer() throws RemoteException {
 	}
@@ -85,12 +90,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 		boolean[] table = new boolean[expectedMessages];
 
 		System.out.println("In total " + totalMessages + " have been received");
-		for (int message : receivedMessages) {
-			table[message - 1] = true;
+		for (int i = 0; i < totalMessages; i++) {
+			table[receivedMessages[i] - 1] = true;
 		}
 		for (int i = 0; i < expectedMessages; i++) {
 			if (!table[i]) {
-				System.out.println("Message " + (i + 1) + "is not received!");
+				System.out.println("Message " + (i + 1) + " is not received!");
 			}
 		}
 	}
@@ -105,17 +110,40 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 				throw new IOException("Null message");
 			}
 			totalMessages = 0;
+			setTimer(TIMEOUT);
 		}
 
 		// TO-DO: Log receipt of the message
 		totalMessages++;
 		receivedMessages[totalMessages - 1] = msg.messageNum;
+		totalMessagesExpected = msg.totalMessages;
+		timer.cancel();
+		setTimer(TIMEOUT);
 
 		// TO-DO: If this is the last expected message, then identify
 		//        any missing messages
 		if (msg.totalMessages == msg.messageNum) {
 			printMissingMessage(receivedMessages, msg.totalMessages, totalMessages);
 			totalMessages = -1;
+			timer.cancel();
 		}
+	}
+
+	private void setTimer(int timeout) {
+		TimerTask timerTask = new TimerTask() {
+			@Override
+			public void run() {
+				System.out.println("Timeout! ");
+				resetBuffer();
+			}
+		};
+		timer = new Timer();
+		timer.schedule(timerTask, timeout * 1000);
+	}
+
+	private void resetBuffer() {
+		printMissingMessage(receivedMessages, totalMessagesExpected, totalMessages);
+		totalMessages = -1;
+		timer.cancel();
 	}
 }
