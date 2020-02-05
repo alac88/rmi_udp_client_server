@@ -16,6 +16,7 @@ public class UDPServer {
 
 	private DatagramSocket recvSoc;
 	private int totalMessages = -1;
+	private int totalMessagesReceived = -1;
 	private int[] receivedMessages;
 	// private boolean close;
 
@@ -34,6 +35,14 @@ public class UDPServer {
 				String s = new String(pac.getData());
 				this.processMessage(s.replace("\n", "").replace("\r", "").trim());
 			}			
+		} catch(SocketTimeoutException e){
+			System.out.println("Timeout reached");
+			// System.out.println("Number of lost messages: " + (msg.totalMessages - this.totalMessages));
+			for (int i = 0 ; i < this.totalMessages ; i++){
+				if (this.receivedMessages[i] == 0){
+					System.out.println("[-] Message " + i + " is missing");
+				}
+			}
 		} catch (IOException e){
 			System.out.println("Error when receiving message: " + e);
 		}
@@ -49,22 +58,23 @@ public class UDPServer {
 	
 			// TO-DO: On receipt of first message, initialise the receive buffer
 			if (msg.messageNum == 0){
-				this.receivedMessages = new int[msg.totalMessages];
+				this.totalMessages = msg.totalMessages;
+				this.receivedMessages = new int[this.totalMessages];
 				Arrays.fill(this.receivedMessages, 0);
 			}
 	
 			// TO-DO: Log receipt of the message
-			this.totalMessages++;
+			this.totalMessagesReceived++;
 			this.receivedMessages[msg.messageNum] = 1;
 			System.out.println("[+] Message " + msg.messageNum + " received");
 	
 			// TO-DO: If this is the last expected message, then identify
 			//        any missing messages
 	
-			if (msg.messageNum == (msg.totalMessages - 1)){
-				if ((this.totalMessages + 1) != msg.totalMessages){
-					System.out.println("Number of lost messages: " + (msg.totalMessages - this.totalMessages));
-					for (int i = 0 ; i < msg.totalMessages ; i++){
+			if (msg.messageNum == (this.totalMessages - 1)){
+				if ((this.totalMessagesReceived + 1) != this.totalMessages){
+					System.out.println("Number of lost messages: " + (this.totalMessages - this.totalMessagesReceived));
+					for (int i = 0 ; i < this.totalMessages ; i++){
 						if (this.receivedMessages[i] == 0){
 							System.out.println("[-] Message " + i + " is missing");
 						}
@@ -78,7 +88,7 @@ public class UDPServer {
 		} catch(SocketTimeoutException e){
 			System.out.println("Timeout reached");
 			// System.out.println("Number of lost messages: " + (msg.totalMessages - this.totalMessages));
-			for (int i = 0 ; i < msg.totalMessages ; i++){
+			for (int i = 0 ; i < this.totalMessages ; i++){
 				if (this.receivedMessages[i] == 0){
 					System.out.println("[-] Message " + i + " is missing");
 				}
