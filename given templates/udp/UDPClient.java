@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 import common.MessageInfo;
 
@@ -20,7 +21,6 @@ public class UDPClient {
 		InetAddress	serverAddr = null;
 		int			recvPort;
 		int 		countTo;
-		// String 		message;
 
 		// Get the parameters
 		if (args.length < 3) {
@@ -38,13 +38,11 @@ public class UDPClient {
 		countTo = Integer.parseInt(args[2]);
 
 
-		// TO-DO: Construct UDP client class and try to send messages
 		UDPClient client = new UDPClient();
 		client.testLoop(serverAddr, recvPort, countTo);
 	}
 
 	public UDPClient(){
-		// TO-DO: Initialise the UDP socket for sending data
 		try {
 			this.sendSoc = new DatagramSocket();
 		} catch(SocketException e){
@@ -53,12 +51,15 @@ public class UDPClient {
 	}
 
 	private void testLoop(InetAddress serverAddr, int recvPort, int countTo) {
-		int				tries = 0;
 
-		// TO-DO: Send the messages to the server
 		for (int i = 0 ; i < countTo ; i++){
 			MessageInfo msg = new MessageInfo(countTo, i);
-			send(msg.toString(), serverAddr, recvPort);
+			try {
+				TimeUnit.MILLISECONDS.sleep(10);
+				send(msg.toString(), serverAddr, recvPort);
+			} catch(Exception e){
+				System.out.println("Error when sending message: " + e);
+			}
 		}
 	}
 
@@ -67,7 +68,6 @@ public class UDPClient {
 		byte[]				pktData = new byte[256];
 		DatagramPacket		pkt;
 
-		// TO-DO: build the datagram packet and send it to the server
 		pktData = payload.getBytes();
 		payloadSize = pktData.length;
 		pkt = new DatagramPacket(pktData, payloadSize, destAddr, destPort);
